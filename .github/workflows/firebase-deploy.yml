@@ -1,0 +1,33 @@
+name: Deploy
+
+on: 
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy_to_live:
+    name: Deploy prod hosting
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        node: [20,22]
+    steps: 
+      - uses: actions/checkout@main
+      - uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Install Firebase Tools
+        run: npm install firebase-tools -g
+      - name: Install dependencies
+        run: npm install
+      - name: Run build
+        env: 
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_APP_PAYPAL_CLIENT_ID: ${{ secrets.VITE_APP_PAYPAL_CLIENT_ID }}
+
+        run: npm run build
+      - name: Run deploy
+        env: 
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        run: firebase deploy --only hosting -P ${{ secrets.FIREBASE_PROJECT_ID }}
